@@ -3,6 +3,15 @@
 This file is consumed by AI coding agents operating on the `omni-infrastructure` repository.
 It describes the project structure, conventions, and available commands.
 
+## User-Facing Docs
+
+End-user documentation is in `docs/`:
+- [docs/architecture.md](docs/architecture.md) — Architecture overview
+- [docs/setup.md](docs/setup.md) — Token/secrets setup
+- [docs/local-mode.md](docs/local-mode.md) — Local execution guide
+- [docs/hybrid-mode.md](docs/hybrid-mode.md) — Hybrid cloud/local guide
+- [docs/providers.md](docs/providers.md) — LLM provider config
+
 ## Project Overview
 
 Omni-Agent Infrastructure is a GitOps multi-agent orchestration system.
