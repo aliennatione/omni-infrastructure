@@ -5,6 +5,7 @@ import json
 import argparse
 from datetime import datetime
 from inference import InferenceRouter
+from doclingest import DocIngester
 
 
 class OmniBridge:
@@ -18,6 +19,8 @@ class OmniBridge:
         with open(os.path.join(config_dir, "providers.json")) as f:
             self.providers = json.load(f)["providers"]
         self.router = InferenceRouter(self.providers)
+        self.ingester = DocIngester(state_dir, config_dir)
+        self.config_dir = config_dir
 
     def resolve_event(self, event_type):
         route = self.matrix["routing_rules"].get(event_type)
@@ -28,6 +31,10 @@ class OmniBridge:
     def dispatch(self, event_type, payload):
         route = self.resolve_event(event_type)
         provider = route["provider"]
+
+        if provider == "doclingest":
+            self._run_ingestion(payload)
+            return
 
         if self.mode == "local":
             override = os.environ.get("LLM_PROVIDER", "")
@@ -68,6 +75,19 @@ Execute the task modifying the code in {self.workspace_dir} if needed.
 
         except Exception as e:
             print(f"[-] Errore: {e}")
+            sys.exit(1)
+
+    def _run_ingestion(self, payload):
+        print(f"[*] Avvio documentazione ingestion...")
+        try:
+            if payload == "__all__":
+                self.ingester.ingest_all()
+            else:
+                self.ingester.crawl_source({"name": payload, "url": payload, "crawl": True})
+            self.ingester.rebuild_context()
+            print("[+] Ingestion completata. CONTEXT.md aggiornato.")
+        except Exception as e:
+            print(f"[-] Errore durante ingestion: {e}")
             sys.exit(1)
 
 

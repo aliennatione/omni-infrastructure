@@ -50,6 +50,7 @@ Vedi [docs/setup.md](docs/setup.md) per token, secrets e deploy CI/CD.
 | [docs/local-mode.md](docs/local-mode.md) | Esecuzione locale con Docker Compose e LLM locali |
 | [docs/hybrid-mode.md](docs/hybrid-mode.md) | Bridge su GitHub Actions + LLM locale via tunnel |
 | [docs/providers.md](docs/providers.md) | Provider LLM supportati e configurazione |
+| [docs/ingestion.md](docs/ingestion.md) | Crawling documentazione → knowledge base agent |
 | [AGENTS.md](AGENTS.md) | Linee guida per AI agent che operano sul codice |
 | [DeepWiki](https://deepwiki.com/aliennatione/omni-infrastructure) | Documentazione automatizzata generata da Devin |
 

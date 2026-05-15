@@ -1,0 +1,34 @@
+{
+  "sources": [
+    {
+      "name": "OpenCode Docs",
+      "url": "https://opencode.ai/docs",
+      "crawl": false,
+      "pages": [
+        "https://opencode.ai/docs/",
+        "https://opencode.ai/docs/config/",
+        "https://opencode.ai/docs/providers/",
+        "https://opencode.ai/docs/cli/",
+        "https://opencode.ai/docs/server/",
+        "https://opencode.ai/docs/network/"
+      ]
+    },
+    {
+      "name": "Docker Docs",
+      "url": "https://docs.docker.com/",
+      "crawl": false,
+      "pages": [
+        "https://docs.docker.com/get-started/",
+        "https://docs.docker.com/compose/"
+      ]
+    },
+    {
+      "name": "GitHub Actions Docs",
+      "url": "https://docs.github.com/en/actions",
+      "crawl": false,
+      "pages": [
+        "https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions"
+      ]
+    }
+  ]
+}
