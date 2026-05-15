@@ -1,0 +1,24 @@
+{
+  "routing_rules": {
+    "small_fix": {
+      "provider": "google_gemini_flash",
+      "mode": "cheap"
+    },
+    "git_automation": {
+      "provider": "google_gemini_flash",
+      "mode": "fast"
+    },
+    "software_refactor": {
+      "provider": "google_gemini_pro",
+      "mode": "heavy"
+    },
+    "local_inference": {
+      "provider": "local_llamacpp",
+      "mode": "local"
+    },
+    "opencode_inference": {
+      "provider": "local_opencode",
+      "mode": "local"
+    }
+  }
+}
