@@ -1,24 +1,19 @@
 {
   "routing_rules": {
     "small_fix": {
-      "provider": "google_gemini_flash",
-      "mode": "cheap"
+      "provider": "google_gemini_flash"
     },
     "git_automation": {
-      "provider": "google_gemini_flash",
-      "mode": "fast"
+      "provider": "google_gemini_flash"
     },
     "software_refactor": {
-      "provider": "google_gemini_pro",
-      "mode": "heavy"
+      "provider": "google_gemini_pro"
     },
     "local_inference": {
-      "provider": "local_llamacpp",
-      "mode": "local"
+      "provider": "local_llamacpp"
     },
     "opencode_inference": {
-      "provider": "local_opencode",
-      "mode": "local"
+      "provider": "local_opencode"
     }
   }
 }

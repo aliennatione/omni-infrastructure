@@ -40,10 +40,12 @@ PYTHONPATH=./core python core/bridge.py \
 
 ### Run with Docker Compose (full stack)
 ```bash
+make setup         # create state/ and workspace/ directories
 make up            # docker compose up -d (llama-server + omni-bridge)
 make logs          # tail -f logs
 make down          # docker compose down
 make pull-model    # download a GGUF model into ./models/
+make shell         # interactive bash in omni-bridge container
 ```
 
 ### Syntax check (no test framework yet)
@@ -59,7 +61,8 @@ python3 -c "import json; json.load(open('config/providers.json')); json.load(ope
 
 ### Single test (manual integration)
 ```bash
-# Requires llama.cpp running on localhost:8080
+# Requires opencode serve running on localhost:4096
+mkdir -p /tmp/test-state /tmp/test-ws
 python3 core/bridge.py \
   --state /tmp/test-state \
   --workspace /tmp/test-ws \
@@ -72,10 +75,11 @@ python3 core/bridge.py \
 ## Code Style Guidelines
 
 ### Imports
-- Standard library first (`os`, `sys`, `json`, `argparse`, `datetime`)
+- Standard library first (`os`, `sys`, `json`, `argparse`, `datetime`, `base64`)
 - Third-party libraries second (`requests`)
 - Relative imports for sibling modules (`from inference import InferenceRouter`)
 - One import per line; `import` blocks separated by blank line
+- Never use `import` inside function/method bodies — always at module level
 
 ### Formatting & Types
 - Python 3.11+ — no type annotations currently used, prefer descriptive names instead

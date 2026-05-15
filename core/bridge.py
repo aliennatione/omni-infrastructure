@@ -22,8 +22,7 @@ class OmniBridge:
     def resolve_event(self, event_type):
         route = self.matrix["routing_rules"].get(event_type)
         if not route:
-            print(f"Errore: Nessuna regola per l'evento '{event_type}'")
-            sys.exit(1)
+            raise ValueError(f"Nessuna regola per l'evento '{event_type}'")
         return route
 
     def dispatch(self, event_type, payload):
@@ -36,15 +35,19 @@ class OmniBridge:
                 provider = override
                 print(f"[*] Modalità locale: forzatura provider a '{provider}'")
             endpoint_override = os.environ.get("LLM_ENDPOINT_URL", "")
-            if endpoint_override:
-                if provider in self.providers:
-                    self.providers[provider]["endpoint"] = endpoint_override
-                    print(f"[*] Endpoint sovrascritto: {endpoint_override}")
+            if endpoint_override and provider in self.providers:
+                self.providers = {**self.providers}
+                self.providers[provider] = {**self.providers[provider], "endpoint": endpoint_override}
+                print(f"[*] Endpoint sovrascritto: {endpoint_override}")
 
         print(f"[*] Routing task '{event_type}' a '{provider}' (mode={self.mode})...")
 
         context_path = os.path.join(self.state_dir, "CONTEXT.md")
-        context_data = open(context_path).read() if os.path.exists(context_path) else "Nessun contesto disponibile."
+        if os.path.exists(context_path):
+            with open(context_path) as f:
+                context_data = f.read()
+        else:
+            context_data = "Nessun contesto disponibile."
 
         prompt = f"""
 SYSTEM: You are an autonomous GitOps AI agent.
@@ -68,6 +71,12 @@ Execute the task modifying the code in {self.workspace_dir} if needed.
             sys.exit(1)
 
 
+def validate_dir(path, label):
+    if not os.path.isdir(path):
+        print(f"[-] Errore: {label} '{path}' non esiste o non è una directory.")
+        sys.exit(1)
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Omni-Agent Bridge")
     parser.add_argument("--state", required=True, help="Percorso alla directory agent-state")
@@ -78,6 +87,10 @@ if __name__ == "__main__":
     parser.add_argument("--mode", choices=["cloud", "local"], default=os.environ.get("LLM_MODE", "cloud"),
                         help="Modalità di esecuzione: cloud (default) o local")
     args = parser.parse_args()
+
+    validate_dir(args.state, "--state")
+    validate_dir(args.workspace, "--workspace")
+    validate_dir(args.config, "--config")
 
     bridge = OmniBridge(args.state, args.workspace, args.config, mode=args.mode)
     bridge.dispatch(args.event, args.payload)

@@ -21,7 +21,7 @@ case "${1:-ngrok}" in
       echo "[-] ngrok non trovato. Installa da https://ngrok.com/download"
       exit 1
     fi
-    ngrok http "${LLAMA_PORT}" --log=stdout
+    ngrok http "${LLAMA_PORT}"
     ;;
 
   tailscale)
@@ -30,8 +30,9 @@ case "${1:-ngrok}" in
       echo "[-] tailscale non trovato. Installa da https://tailscale.com/download"
       exit 1
     fi
-    tailscale funnel --bg "${LLAMA_PORT}"
-    echo "[*] Funnel attivo. Ottieni l'URL con: tailscale status --json | grep funnel"
+    tailscale funnel "${LLAMA_PORT}" &
+    echo "[*] Funnel avviato in background (PID $!)."
+    echo "[*] Ottieni l'URL con: tailscale status --json | grep funnel"
     ;;
 
   *)

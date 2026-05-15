@@ -5,8 +5,6 @@ services:
       - "8080:8080"
     volumes:
       - ./models:/models
-    environment:
-      - LLAMA_ARG_N_GPU_Layers=${N_GPU_LAYERS:-0}
     command: >
       --model /models/${MODEL_FILE:-llama-2-7b.Q4_K_M.gguf}
       --host 0.0.0.0

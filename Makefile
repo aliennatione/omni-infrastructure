@@ -1,4 +1,4 @@
-.PHONY: up down ps logs pull-model shell
+.PHONY: up down ps logs pull-model shell setup
 
 # Avvia tutta la pila locale (llama.cpp + omni-bridge)
 up:
@@ -22,14 +22,20 @@ up-llama:
 	docker compose up -d llama-server
 
 # Scarica un modello GGUF in ./models/
+# Uso: make pull-model MODEL_URL=https://... MODEL_FILE=model.gguf
 pull-model:
 	@echo "[*] Scarico modello $(MODEL_URL) in ./models/..."
 	mkdir -p models
 	curl -L -o models/$(MODEL_FILE) $(MODEL_URL)
 
-# Shell interattiva dentro il container bridge
+# Shell interattiva dentro il container bridge (sovrascrive ENTRYPOINT)
 shell:
-	docker compose run --rm omni-bridge /bin/bash
+	docker compose run --rm --entrypoint /bin/bash omni-bridge
+
+# Crea le directory per i volumi Docker
+setup:
+	mkdir -p state workspace
+	@echo "[*] Directory state/ e workspace/ create."
 
 # Esegui bridge in locale (senza Docker)
 run-local:

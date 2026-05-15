@@ -65,16 +65,14 @@ jobs:
       run: |
         MODE_FLAG="${{ github.event.inputs.mode || 'cloud' }}"
 
-        CMD="python3 infrastructure/core/bridge.py \
+        echo "[*] Esecuzione bridge in modalità: $MODE_FLAG"
+        python3 infrastructure/core/bridge.py \
           --state ./state \
           --workspace ./workspace \
           --config ./infrastructure/config \
-          --event \"${{ github.event.inputs.event_type || 'git_automation' }}\" \
-          --payload \"${{ github.event.inputs.payload || 'Routine context update.' }}\" \
-          --mode $MODE_FLAG"
-
-        echo "[*] Esecuzione bridge in modalità: $MODE_FLAG"
-        eval $CMD
+          --event "${{ github.event.inputs.event_type || 'git_automation' }}" \
+          --payload "${{ github.event.inputs.payload || 'Routine context update.' }}" \
+          --mode "$MODE_FLAG"
 
     - name: Workspace PR Creation
       env:

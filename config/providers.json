@@ -22,7 +22,7 @@
     },
     "local_localai": {
       "type": "openai_compat",
-      "endpoint": "http://localhost:8080",
+      "endpoint": "http://localhost:8081",
       "model": "gpt-4"
     },
     "local_opencode": {

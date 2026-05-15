@@ -1,4 +1,5 @@
 import os
+import base64
 import requests
 
 
@@ -27,7 +28,7 @@ class InferenceRouter:
     def google_api(self, endpoint, prompt):
         api_key = os.environ.get("GEMINI_API_KEY", "")
         if not api_key:
-            raise ValueError("GEMINI_API_KEY non configurata.")
+            return {"error": "GEMINI_API_KEY non configurata."}
         authenticated_url = f"{endpoint}?key={api_key}"
         headers = {"Content-Type": "application/json"}
 
@@ -38,8 +39,11 @@ class InferenceRouter:
                 "maxOutputTokens": 4096
             }
         }
-        response = requests.post(authenticated_url, json=payload, headers=headers, timeout=self.timeout)
-        response.raise_for_status()
+        try:
+            response = requests.post(authenticated_url, json=payload, headers=headers, timeout=self.timeout)
+            response.raise_for_status()
+        except Exception as e:
+            return {"error": f"Errore chiamata Google API: {e}"}
 
         response_json = response.json()
         try:
@@ -77,7 +81,6 @@ class InferenceRouter:
 
         auth_headers = {}
         if password:
-            import base64
             token = base64.b64encode(f"{username}:{password}".encode()).decode()
             auth_headers["Authorization"] = f"Basic {token}"
 
@@ -101,6 +104,11 @@ class InferenceRouter:
             for part in data.get("parts", []):
                 if part.get("type") == "text":
                     ai_text += part.get("text", "")
-            return {"result": ai_text.strip()}
+            result = {"result": ai_text.strip()}
+            try:
+                requests.delete(f"{base_url}/session/{session_id}", headers=auth_headers, timeout=10)
+            except Exception:
+                pass
+            return result
         except Exception as e:
             return {"error": f"Errore chiamata OpenCode API: {e}"}
