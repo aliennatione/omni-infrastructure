@@ -28,6 +28,40 @@ class OmniBridge:
             raise ValueError(f"Nessuna regola per l'evento '{event_type}'")
         return route
 
+    def load_event_prompt(self, event_type):
+        prompt_path = os.path.join(self.config_dir, "prompts", f"{event_type}.json")
+        if os.path.exists(prompt_path):
+            with open(prompt_path) as f:
+                return json.load(f)
+        return None
+
+    def build_system_prompt(self, event_type, compact_mode):
+        event_prompt = self.load_event_prompt(event_type)
+
+        if compact_mode:
+            if event_prompt:
+                return (
+                    f"{event_prompt['system_directive']} "
+                    "RESPOND IN CAVEMAN MODE: drop filler words, use fragments, "
+                    "keep substance, no pleasantries, be direct and terse. "
+                    "Technical accuracy must remain 100%."
+                )
+            return (
+                "You are an autonomous GitOps AI agent. "
+                "RESPOND IN CAVEMAN MODE: drop filler words, use fragments, "
+                "keep substance, no pleasantries, be direct and terse. "
+                "Technical accuracy must remain 100%."
+            )
+
+        if event_prompt:
+            behavior_lines = "\n".join(f"- {b}" for b in event_prompt.get("behavior", []))
+            return (
+                f"{event_prompt['system_directive']}\n\n"
+                f"Behavior rules:\n{behavior_lines}"
+            )
+
+        return "You are an autonomous GitOps AI agent."
+
     def dispatch(self, event_type, payload, provider_override=None):
         if provider_override:
             provider = provider_override
@@ -55,8 +89,14 @@ class OmniBridge:
         else:
             context_data = "Nessun contesto disponibile."
 
+        compact_mode = os.environ.get("CAVEMAN_MODE", "")
+        if compact_mode:
+            context_data = self._compress_context(context_data)
+
+        system_directive = self.build_system_prompt(event_type, bool(compact_mode))
+
         prompt = f"""
-SYSTEM: You are an autonomous GitOps AI agent.
+SYSTEM: {system_directive}
 CONTEXT: {context_data}
 TASK: {payload}
 Execute the task modifying the code in {self.workspace_dir} if needed.
@@ -75,6 +115,31 @@ Execute the task modifying the code in {self.workspace_dir} if needed.
         except Exception as e:
             print(f"[-] Errore: {e}")
             sys.exit(1)
+
+    def _compress_context(self, text):
+        lines = text.split("\n")
+        compressed = []
+        skip_next_blank = False
+        for line in lines:
+            stripped = line.strip()
+            if not stripped:
+                if skip_next_blank:
+                    continue
+                skip_next_blank = True
+                compressed.append("")
+                continue
+            skip_next_blank = False
+            if stripped.startswith("# ") or stripped.startswith("## "):
+                compressed.append(line)
+            elif stripped.startswith("> ") or stripped.startswith("<!--"):
+                continue
+            elif stripped.startswith("- "):
+                compressed.append(line)
+            elif len(stripped) > 200:
+                compressed.append(line[:200] + "...")
+            else:
+                compressed.append(line)
+        return "\n".join(compressed)
 
     def _run_ingestion(self, payload):
         print(f"[*] Avvio documentazione ingestion...")
@@ -110,7 +175,12 @@ if __name__ == "__main__":
                              "Se omesso, usa matrix.json in base a --event")
     parser.add_argument("--list-providers", action="store_true",
                         help="Elenca i provider disponibili ed esce")
+    parser.add_argument("--compact", action="store_true",
+                        help="Modalità concisa (caveman): riduce token output del ~65%%")
     args = parser.parse_args()
+
+    if args.compact:
+        os.environ["CAVEMAN_MODE"] = "1"
 
     if args.list_providers:
         providers_path = os.path.join(args.config, "providers.json")
