@@ -1,6 +1,7 @@
 services:
   llama-server:
     image: ghcr.io/ggerganov/llama.cpp:server
+    profiles: ["llamacpp"]
     ports:
       - "8080:8080"
     volumes:
@@ -13,14 +14,36 @@ services:
       --n-gpu-layers ${N_GPU_LAYERS:-0}
     restart: unless-stopped
 
+  localai:
+    image: localai/localai:latest
+    profiles: ["localai"]
+    ports:
+      - "8081:8080"
+    environment:
+      - MODELS_PATH=/models
+    volumes:
+      - ./models:/models
+      - ./localai-models:/build/models
+
+  ollama:
+    image: ollama/ollama:latest
+    profiles: ["ollama"]
+    ports:
+      - "11434:11434"
+    volumes:
+      - ./ollama-models:/root/.ollama
+    entrypoint: ["ollama", "serve"]
+
   omni-bridge:
     build: .
+    profiles: ["llamacpp", "localai", "ollama"]
     depends_on:
       - llama-server
+      - localai
+      - ollama
     environment:
       - LLM_MODE=local
-      - LLM_PROVIDER=local_llamacpp
-      - LLM_ENDPOINT_URL=http://llama-server:8080
+      - LLM_ENDPOINT_URL=${LLM_ENDPOINT_URL:-}
       - GEMINI_API_KEY=${GEMINI_API_KEY:-}
     volumes:
       - ./state:/data/state

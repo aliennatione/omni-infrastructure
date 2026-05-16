@@ -1,13 +1,109 @@
 # Modalità Locale
 
-Esecuzione completa su macchina locale con Docker Compose.
+Esecuzione su macchina locale con server LLM Dockerizzati e bridge nativo.
 
 ## Prerequisiti
 
 - Docker + Docker Compose
-- Un modello LLM in formato GGUF
+- Un modello LLM in formato GGUF (per llama.cpp)
 
-## 1. Modello LLM
+## Server LLM con Docker Compose Profiles
+
+I server LLM sono organizzati con **profili Docker Compose**. Ogni profilo
+corrisponde a un provider e si avvia separatamente:
+
+```bash
+# Profili disponibili
+make profiles
+
+# Avvia solo llama.cpp (default)
+make up-llamacpp
+
+# Oppure LocalAI o Ollama
+make up-localai
+make up-ollama
+
+# Verifica che sia su
+make ps
+```
+
+| Servizio | Profile | Porta | Provider |
+|---|---|---|---|
+| `llama-server` | `llamacpp` | `:8080` | `local_llamacpp` |
+| `localai` | `localai` | `:8081` | `local_localai` |
+| `ollama` | `ollama` | `:11434` | `local_ollama` |
+
+Puoi anche tenerne su più di uno contemporaneamente (se hai RAM):
+
+```bash
+docker compose --profile llamacpp --profile ollama up -d
+```
+
+## Esecuzione bridge con `--provider`
+
+Una volta che il server LLM è in ascolto, esegui il bridge specificando il provider:
+
+```bash
+PYTHONPATH=./core python core/bridge.py \
+  --state ./state \
+  --workspace ./workspace \
+  --config ./config \
+  --event git_automation \
+  --payload "Refactor the main function" \
+  --mode local \
+  --provider local_llamacpp
+```
+
+### Tutti in un comando con Make
+
+```bash
+make run PROVIDER=local_llamacpp PAYLOAD="Refactor"
+make run PROVIDER=local_ollama PAYLOAD="Audit code"
+make run PROVIDER=local_localai PAYLOAD="Add tests"
+```
+
+Oppure containerizzato (server + bridge, poi ferma tutto):
+
+```bash
+make run-container PROVIDER=llamacpp
+```
+
+## Esempi per scenario
+
+### Locale (utente umano)
+```bash
+# 1. Avvia il server una volta
+make up-llamacpp
+
+# 2. Chiama il bridge quante volte vuoi — risposta immediata
+make run PROVIDER=local_llamacpp PAYLOAD="Fix bug in main.py"
+make run PROVIDER=google_gemini_flash PAYLOAD="Review my code"
+
+# 3. Fine sessione: libera RAM
+docker compose --profile llamacpp down
+```
+
+### Locale (agente autonomo)
+```bash
+# L'agente chiama il bridge con --provider esplicito
+# Il server LLM deve già essere in ascolto (gestito esternamente)
+python core/bridge.py \
+  --state /data/state --workspace /data/workspace --config ./config \
+  --event git_automation --payload "Refactor" \
+  --mode local --provider local_llamacpp
+```
+
+### GitHub Actions (trigger manuale, LLM locale via tunnel)
+```yaml
+# Nel workflow, se mode=local, passa --provider dal secret
+python3 infrastructure/core/bridge.py \
+  ... --mode local --provider "${{ secrets.LLM_PROVIDER }}"
+```
+
+### GitHub Actions (cron automatico)
+Senza `--provider`, usa matrix.json → `google_gemini_flash`. Nessun server locale.
+
+## 1. Modello LLM (solo per llama.cpp)
 
 Scarica un modello GGUF nella directory `models/`:
 
@@ -16,45 +112,9 @@ mkdir -p models
 make pull-model MODEL_URL=https://huggingface.co/TheBloke/Llama-2-7B-GGUF/resolve/main/llama-2-7b.Q4_K_M.gguf MODEL_FILE=llama-2-7b.Q4_K_M.gguf
 ```
 
-## 2. Avvio
+## 2. Esecuzione senza Docker
 
-```bash
-# Crea le directory per i volumi
-make setup
-
-# Avvia llama-server + omni-bridge
-make up
-
-# Log in tempo reale
-make logs
-```
-
-Il bridge eseguirà il task configurato in `EVENT_TYPE` (default: `git_automation`)
-e scriverà il risultato in `state/journal/`.
-
-## 3. Personalizzazione
-
-Imposta variabili d'ambiente o crea un file `.env`:
-
-```bash
-# .env
-LLM_MODE=local
-LLM_PROVIDER=local_llamacpp
-LLM_ENDPOINT_URL=http://llama-server:8080
-MODEL_FILE=llama-2-7b.Q4_K_M.gguf
-EVENT_TYPE=git_automation
-TASK_PAYLOAD="Refactor the main function"
-```
-
-Poi avvia con:
-```bash
-docker compose --env-file .env up -d
-```
-
-## 4. Esecuzione senza Docker
-
-Puoi eseguire il bridge direttamente in Python se hai già
-un LLM server in esecuzione su localhost:
+Bridge direttamente in Python se hai già un LLM server su localhost:
 
 ```bash
 # llama.cpp server
@@ -65,30 +125,20 @@ PYTHONPATH=./core python core/bridge.py \
   --state ./state \
   --workspace ./workspace \
   --config ./config \
-  --event local_inference \
+  --event git_automation \
   --payload "Hello world" \
-  --mode local
+  --mode local \
+  --provider local_llamacpp
 ```
-
-## 5. Provider Locali Disponibili
-
-| Provider | Porta | Tipo |
-|---|---|---|
-| `local_llamacpp` | 8080 | OpenAI-compat |
-| `local_ollama` | 11434 | OpenAI-compat |
-| `local_localai` | 8081 | OpenAI-compat |
-| `local_opencode` | 4096 | API nativa opencode serve |
-
-Per cambiare provider, imposta `LLM_PROVIDER` o modifica `config/matrix.json`.
 
 ## Troubleshooting
 
-**Errore: "Connection refused"**
-Il LLM server non è in esecuzione. Avvia prima llama-server.
+**Errore: "impossibile connettersi"**
+Il server LLM non è in esecuzione. Il bridge ora mostra un suggerimento:
+```
+Provider 'local_llamacpp': impossibile connettersi.
+    Suggerimento: make up-llamacpp
+```
 
 **Errore: "No such file or directory"**
 Hai dimenticato `make setup`. Le directory `state/` e `workspace/` devono esistere.
-
-**Il container esce subito**
-Il bridge esegue un singolo task e termina. È normale.
-Per tenerlo in vita, usa `make logs` e verifica il risultato.

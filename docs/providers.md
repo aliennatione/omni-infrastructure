@@ -47,7 +47,11 @@ API nativa del server `opencode serve`.
 
 ## Routing
 
-`config/matrix.json` mappa eventi → provider:
+Due modalità: **automatica** (via matrix.json) o **esplicita** (via `--provider`).
+
+### Automatica: `config/matrix.json`
+
+Usata quando NON passi `--provider`. Mappa eventi → provider:
 
 ```json
 {
@@ -61,7 +65,36 @@ API nativa del server `opencode serve`.
 }
 ```
 
-## Sovrascritture via Ambiente
+Adatta per cron automatico e workflow prevedibili.
+
+### Esplicita: `--provider <nome>`
+
+Passando `--provider`, matrix.json viene saltato e il provider scelto viene usato direttamente. Funziona in TUTTI gli scenari:
+
+```bash
+# Umano o agente locale — sceglie il LLM al volo
+python core/bridge.py \
+  --state ../agent-state --workspace ../project-source --config ./config \
+  --event git_automation --payload "Refactor" \
+  --mode local \
+  --provider local_llamacpp
+
+# GitHub Actions (trigger manuale) — LLM locale via tunnel
+python core/bridge.py ... --mode local --provider local_llamacpp
+
+# GitHub Actions (cron) — senza --provider, usa matrix.json → Gemini
+python core/bridge.py ... --event git_automation --payload "..."
+```
+
+### Elenco provider disponibili
+
+```bash
+PYTHONPATH=./core python core/bridge.py \
+  --state ./state --workspace ./workspace --config ./config \
+  --list-providers
+```
+
+### Sovrascritture via Ambiente
 
 In modalità `--mode local`, puoi forzare provider ed endpoint:
 

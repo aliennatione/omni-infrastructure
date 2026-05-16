@@ -28,19 +28,18 @@ class OmniBridge:
             raise ValueError(f"Nessuna regola per l'evento '{event_type}'")
         return route
 
-    def dispatch(self, event_type, payload):
-        route = self.resolve_event(event_type)
-        provider = route["provider"]
+    def dispatch(self, event_type, payload, provider_override=None):
+        if provider_override:
+            provider = provider_override
+        else:
+            route = self.resolve_event(event_type)
+            provider = route["provider"]
 
         if provider == "doclingest":
             self._run_ingestion(payload)
             return
 
         if self.mode == "local":
-            override = os.environ.get("LLM_PROVIDER", "")
-            if override:
-                provider = override
-                print(f"[*] Modalità locale: forzatura provider a '{provider}'")
             endpoint_override = os.environ.get("LLM_ENDPOINT_URL", "")
             if endpoint_override and provider in self.providers:
                 self.providers = {**self.providers}
@@ -106,11 +105,25 @@ if __name__ == "__main__":
     parser.add_argument("--payload", required=True, help="Testo del task da eseguire")
     parser.add_argument("--mode", choices=["cloud", "local"], default=os.environ.get("LLM_MODE", "cloud"),
                         help="Modalità di esecuzione: cloud (default) o local")
+    parser.add_argument("--provider", default=None,
+                        help="Provider LLM (es. local_llamacpp, google_gemini_flash). "
+                             "Se omesso, usa matrix.json in base a --event")
+    parser.add_argument("--list-providers", action="store_true",
+                        help="Elenca i provider disponibili ed esce")
     args = parser.parse_args()
+
+    if args.list_providers:
+        providers_path = os.path.join(args.config, "providers.json")
+        with open(providers_path) as f:
+            providers = json.load(f)["providers"]
+        print("Provider disponibili:")
+        for name, cfg in providers.items():
+            print(f"  {name:30s} type={cfg['type']:15s} endpoint={cfg['endpoint']}")
+        sys.exit(0)
 
     validate_dir(args.state, "--state")
     validate_dir(args.workspace, "--workspace")
     validate_dir(args.config, "--config")
 
     bridge = OmniBridge(args.state, args.workspace, args.config, mode=args.mode)
-    bridge.dispatch(args.event, args.payload)
+    bridge.dispatch(args.event, args.payload, provider_override=args.provider)

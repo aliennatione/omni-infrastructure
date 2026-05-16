@@ -3,6 +3,14 @@ import base64
 import requests
 
 
+PROVIDER_HINTS = {
+    "local_llamacpp": "make up-llamacpp",
+    "local_localai": "make up-localai",
+    "local_ollama": "make up-ollama",
+    "local_opencode": "opencode serve",
+}
+
+
 class InferenceRouter:
     def __init__(self, providers):
         self.providers = providers
@@ -25,26 +33,31 @@ class InferenceRouter:
         else:
             raise NotImplementedError(f"Tipo provider {ptype} non supportato.")
 
+    def _hint(self, provider_name, err):
+        err_str = str(err).lower()
+        if "connection refused" in err_str or "connection refused" in err_str or "111" in err_str or "connect" in err_str:
+            hint = PROVIDER_HINTS.get(provider_name)
+            extra = ""
+            if hint:
+                extra = f"\n    Suggerimento: {hint}"
+            return {"error": f"Provider '{provider_name}': impossibile connettersi.{extra}"}
+        return {"error": f"Provider '{provider_name}': {err}"}
+
     def google_api(self, endpoint, prompt):
         api_key = os.environ.get("GEMINI_API_KEY", "")
         if not api_key:
             return {"error": "GEMINI_API_KEY non configurata."}
         authenticated_url = f"{endpoint}?key={api_key}"
         headers = {"Content-Type": "application/json"}
-
         payload = {
             "contents": [{"parts": [{"text": prompt}]}],
-            "generationConfig": {
-                "temperature": 0.2,
-                "maxOutputTokens": 4096
-            }
+            "generationConfig": {"temperature": 0.2, "maxOutputTokens": 4096}
         }
         try:
             response = requests.post(authenticated_url, json=payload, headers=headers, timeout=self.timeout)
             response.raise_for_status()
         except Exception as e:
-            return {"error": f"Errore chiamata Google API: {e}"}
-
+            return self._hint("google_gemini_pro", e)
         response_json = response.json()
         try:
             ai_text = response_json["candidates"][0]["content"]["parts"][0]["text"]
@@ -55,10 +68,7 @@ class InferenceRouter:
     def openai_compat(self, base_url, model, prompt):
         api_key = os.environ.get("LLM_API_KEY", "sk-no-key-required")
         url = f"{base_url.rstrip('/')}/v1/chat/completions"
-        headers = {
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json"
-        }
+        headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
         payload = {
             "model": model,
             "messages": [{"role": "user", "content": prompt}],
@@ -72,26 +82,21 @@ class InferenceRouter:
             ai_text = response_json["choices"][0]["message"]["content"]
             return {"result": ai_text}
         except Exception as e:
-            return {"error": f"Errore chiamata OpenAI-compat: {e}"}
+            return self._hint(None, e)
 
     def opencode_api(self, base_url, prompt):
         password = os.environ.get("OPENCODE_SERVER_PASSWORD", "")
         username = os.environ.get("OPENCODE_SERVER_USERNAME", "opencode")
         base_url = base_url.rstrip("/")
-
         auth_headers = {}
         if password:
             token = base64.b64encode(f"{username}:{password}".encode()).decode()
             auth_headers["Authorization"] = f"Basic {token}"
-
         try:
             sess_resp = requests.post(f"{base_url}/session", headers=auth_headers, timeout=30)
             sess_resp.raise_for_status()
             session_id = sess_resp.json()["id"]
-
-            payload = {
-                "parts": [{"type": "text", "text": prompt}]
-            }
+            payload = {"parts": [{"type": "text", "text": prompt}]}
             msg_resp = requests.post(
                 f"{base_url}/session/{session_id}/message",
                 json=payload,
@@ -111,4 +116,4 @@ class InferenceRouter:
                 pass
             return result
         except Exception as e:
-            return {"error": f"Errore chiamata OpenCode API: {e}"}
+            return self._hint("local_opencode", e)

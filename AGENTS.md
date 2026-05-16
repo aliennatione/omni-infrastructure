@@ -44,17 +44,28 @@ PYTHONPATH=./core python core/bridge.py \
   --config ./config \
   --event git_automation \
   --payload "Routine check" \
-  --mode local
+  --mode local \
+  --provider local_llamacpp
 ```
 
-### Run with Docker Compose (full stack)
+### Run with Docker Compose (profiles)
 ```bash
 make setup         # create state/ and workspace/ directories
-make up            # docker compose up -d (llama-server + omni-bridge)
+make up-llamacpp   # start llama.cpp server (profile: llamacpp)
+make up-localai    # start LocalAI server (profile: localai)
+make up-ollama     # start Ollama server (profile: ollama)
+make up            # start default profile (llamacpp)
 make logs          # tail -f logs
 make down          # docker compose down
 make pull-model    # download a GGUF model into ./models/
 make shell         # interactive bash in omni-bridge container
+make profiles      # list available profiles
+```
+
+### Run with provider override
+```bash
+make run PROVIDER=local_llamacpp PAYLOAD="Refactor"
+make run PROVIDER=google_gemini_flash PAYLOAD="Review"
 ```
 
 ### Syntax check (no test framework yet)
@@ -70,15 +81,16 @@ python3 -c "import json; json.load(open('config/providers.json')); json.load(ope
 
 ### Single test (manual integration)
 ```bash
-# Requires opencode serve running on localhost:4096
+# Test with --provider flag (no matrix.json needed)
 mkdir -p /tmp/test-state /tmp/test-ws
-python3 core/bridge.py \
+PYTHONPATH=./core python core/bridge.py \
   --state /tmp/test-state \
   --workspace /tmp/test-ws \
   --config ./config \
-  --event opencode_inference \
+  --event test \
   --payload "Hello, what is 2+2?" \
-  --mode local
+  --mode local \
+  --provider local_opencode
 ```
 
 ## Code Style Guidelines
