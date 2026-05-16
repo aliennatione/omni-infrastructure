@@ -1,4 +1,4 @@
-.PHONY: up down ps logs pull-model shell setup run up-% run-% list-providers install-cron install-service install-pp
+.PHONY: up down ps logs pull-model shell setup run up-% run-% list-providers install-cron install-service install-pp test
 
 PROVIDER ?= llamacpp
 
@@ -101,3 +101,11 @@ install-pp:
 	go install github.com/mvanhorn/printing-press-library/library/productivity/slack/cmd/slack-pp-mcp@latest
 	go install github.com/mvanhorn/printing-press-library/library/payments/stripe/cmd/stripe-pp-mcp@latest
 	@echo "[+] Printing Press installato. Vedi docs/printing-press.md per configurazione."
+
+# Esegui tutti i test
+test:
+	python3 -m pytest tests/ -v --tb=short
+
+# Esegui un singolo file di test
+test-%:
+	python3 -m pytest tests/test_$*.py -v --tb=short
