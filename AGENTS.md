@@ -6,11 +6,15 @@ It describes the project structure, conventions, and available commands.
 ## User-Facing Docs
 
 End-user documentation is in `docs/`:
+- [CLAUDE.md](CLAUDE.md) — Project overview for Claude Code (and any LLM agent)
 - [docs/architecture.md](docs/architecture.md) — Architecture overview
 - [docs/setup.md](docs/setup.md) — Token/secrets setup
 - [docs/local-mode.md](docs/local-mode.md) — Local execution guide
 - [docs/hybrid-mode.md](docs/hybrid-mode.md) — Hybrid cloud/local guide
 - [docs/providers.md](docs/providers.md) — LLM provider config
+- [docs/STATUS.md](docs/STATUS.md) — Quadro completo situazione progetto
+- [docs/wiki/index.md](docs/wiki/index.md) — Wiki di conoscenza (decisioni, scoperte, provider)
+- [docs/plan/README.md](docs/plan/README.md) — Piano di lavoro fasi di sviluppo
 
 ## Project Overview
 
@@ -168,3 +172,91 @@ PYTHONPATH=./core python core/bridge.py \
 - Use env vars at runtime (os.environ.get) or GitHub secrets in CI
 - Append-only journal (never overwrite log files)
 - PR-based workflow: agent never pushes directly to main in project-source
+
+## Wiki Maintenance (LLM Wiki Pattern)
+
+The project wiki lives in `docs/wiki/`. It is a persistent, interlinked collection of markdown files
+maintained collaboratively by humans and AI agents. The goal is to accumulate knowledge
+(decisions, discoveries, architecture rationale, provider notes) so it is not re-derived on every session.
+
+### Directory structure
+
+```
+docs/wiki/
+├── index.md            # Catalog of all wiki pages (must stay accurate)
+├── log.md              # Append-only chronological log
+├── provider/           # Entity pages for each LLM provider
+├── decision/           # Architecture Decision Records (lightweight)
+└── discovery/          # Technical discoveries / findings
+```
+
+### Page format
+
+```markdown
+---
+tags: [provider, openhands]
+related: [phase-1-openhands.md, providers.md]
+---
+
+# Title
+
+Summary paragraph.
+
+## Details
+
+...
+```
+
+- Use `[wikilink](../path/to/page.md)` for cross-references (relative paths from wiki root)
+- Add YAML frontmatter with `tags` and `related` for discoverability and Dataview compatibility
+- One concept per page. If a page grows beyond ~300 lines, split it.
+
+### Workflows
+
+#### Ingest (adding new knowledge)
+
+1. When you discover something new (provider behavior, design decision, external source), create a page in the appropriate subdirectory
+2. Add cross-references to related pages using wikilinks
+3. Update `docs/wiki/index.md`: add the new page to the relevant category table
+4. Append an entry to `docs/wiki/log.md` with prefix `## [YYYY-MM-DD] ingest | Title`
+5. If existing pages are affected by the new knowledge, update them (resolve contradictions, add cross-refs)
+
+#### Query (answering from the wiki)
+
+1. Read `docs/wiki/index.md` to find relevant pages
+2. Read the relevant pages
+3. Synthesize an answer with citations to wiki pages
+4. If the answer produces valuable synthesis, file it back as a new wiki page and log it
+5. Log the query in `docs/wiki/log.md` with prefix `## [YYYY-MM-DD] query | Topic`
+
+#### Lint (periodic health check)
+
+1. Scan for contradictions between pages (same claim, different statements)
+2. Find orphan pages with no inbound links
+3. Identify stale claims that newer knowledge supersedes
+4. Spot missing pages (concepts mentioned but not documented)
+5. Update `docs/wiki/index.md` if any pages changed
+6. Log the lint pass in `docs/wiki/log.md` with prefix `## [YYYY-MM-DD] lint | pass`
+
+### Log format
+
+Every entry in `log.md` starts with a consistent prefix for grep-ability:
+
+```markdown
+## [YYYY-MM-DD] ingest | Short Title
+## [YYYY-MM-DD] query | Topic
+## [YYYY-MM-DD] lint | pass
+## [YYYY-MM-DD] init | Description
+```
+
+This makes the log parseable with unix tools:
+```bash
+grep "^## \[" docs/wiki/log.md | tail -10
+```
+
+### When to create vs. update
+
+- **Create** a new page when: a new provider, a new decision, a new discovery, a new external source
+- **Update** an existing page when: new information about an existing topic, correcting errors, adding cross-refs
+- **Do NOT** delete pages — mark superseded content with a note at the top instead
+- **Do NOT** rewrite history in `log.md` — always append

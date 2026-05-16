@@ -45,41 +45,18 @@ Vedi [docs/setup.md](docs/setup.md) per token, secrets e deploy CI/CD.
 
 | Documento | Contenuto |
 |---|---|
+| [docs/STATUS.md](docs/STATUS.md) | Quadro completo della situazione — stato, componenti, provider, roadmap |
 | [docs/architecture.md](docs/architecture.md) | Architettura a 3 repository, isolamento, flusso asincrono |
 | [docs/setup.md](docs/setup.md) | Configurazione token GitHub, secrets, chiavi API |
 | [docs/local-mode.md](docs/local-mode.md) | Esecuzione locale con Docker Compose e LLM locali |
 | [docs/hybrid-mode.md](docs/hybrid-mode.md) | Bridge su GitHub Actions + LLM locale via tunnel |
 | [docs/providers.md](docs/providers.md) | Provider LLM supportati e configurazione |
 | [docs/ingestion.md](docs/ingestion.md) | Crawling documentazione → knowledge base agent |
+| [docs/wiki/index.md](docs/wiki/index.md) | Wiki di conoscenza — decisioni, scoperte, provider |
+| [docs/plan/README.md](docs/plan/README.md) | Piano di lavoro — fasi di sviluppo |
 | [AGENTS.md](AGENTS.md) | Linee guida per AI agent che operano sul codice |
+| [CLAUDE.md](CLAUDE.md) | Panoramica progetto per Claude Code e agenti LLM |
 | [DeepWiki](https://deepwiki.com/aliennatione/omni-infrastructure) | Documentazione automatizzata generata da Devin |
 
-## Provider Supportati
-
-| Provider | Tipo | Modalità |
-|---|---|---|
-| Google Gemini Flash | cloud | default per task piccoli |
-| Google Gemini Pro | cloud | default per refactor complessi |
-| llama.cpp (locale) | locale | via `local_llamacpp` |
-| Ollama (locale) | locale | via `local_ollama` |
-| LocalAI (locale) | locale | via `local_localai` |
-| OpenCode serve | locale | via `local_opencode` |
-
-## Repository del sistema
-
-| Repository | Ruolo | Visibilità |
-|---|---|---|
-| `omni-infrastructure` | Control plane — bridge, config, CI/CD | Pubblico/Privato |
-| `agent-state` | Memory plane — contesto, journal | Privato |
-| `project-source` | Data plane — codice applicativo | Privato |
-
-## Comandi utili
-
-```bash
-make setup      # crea state/ e workspace/
-make up         # avvia llama-server + omni-bridge
-make down       # ferma tutto
-make logs       # log in tempo reale
-make shell      # shell interattiva nel container bridge
-make pull-model # scarica un modello GGUF
-```
+Per una panoramica completa — provider, comandi, architettura e stato dello sviluppo —
+vedi [docs/STATUS.md](docs/STATUS.md).
