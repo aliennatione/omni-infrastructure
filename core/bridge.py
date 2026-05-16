@@ -62,7 +62,7 @@ class OmniBridge:
 
         return "You are an autonomous GitOps AI agent."
 
-    def dispatch(self, event_type, payload, provider_override=None):
+    def dispatch(self, event_type, payload, provider_override=None, stream=False):
         if provider_override:
             provider = provider_override
         else:
@@ -102,15 +102,24 @@ TASK: {payload}
 Execute the task modifying the code in {self.workspace_dir} if needed.
 """
         try:
-            result = self.router.run(provider, prompt)
-            print("[+] Inferenza completata.")
+            if stream:
+                full_response = ""
+                for chunk in self.router.stream(provider, prompt):
+                    print(chunk, end="", flush=True)
+                    full_response += chunk
+                print()
+                result_text = full_response
+            else:
+                result = self.router.run(provider, prompt)
+                result_text = str(result.get("result", ""))
+                print("[+] Inferenza completata.")
 
             journal_dir = os.path.join(self.state_dir, "journal")
             os.makedirs(journal_dir, exist_ok=True)
             log_file = os.path.join(journal_dir, f"{datetime.now().strftime('%Y-%m-%d')}.log")
 
             with open(log_file, "a") as lf:
-                lf.write(f"\n--- {datetime.now().isoformat()} ---\nMode: {self.mode}\nTask: {payload}\nResult: {str(result.get('result'))[:500]}...\n")
+                lf.write(f"\n--- {datetime.now().isoformat()} ---\nMode: {self.mode}\nTask: {payload}\nResult: {result_text[:500]}...\n")
 
         except Exception as e:
             print(f"[-] Errore: {e}")
@@ -177,6 +186,8 @@ if __name__ == "__main__":
                         help="Elenca i provider disponibili ed esce")
     parser.add_argument("--compact", action="store_true",
                         help="Modalità concisa (caveman): riduce token output del ~65%%")
+    parser.add_argument("--stream", action="store_true",
+                        help="Stampa tokens in real-time durante l'inferenza")
     args = parser.parse_args()
 
     if args.compact:
@@ -196,4 +207,4 @@ if __name__ == "__main__":
     validate_dir(args.config, "--config")
 
     bridge = OmniBridge(args.state, args.workspace, args.config, mode=args.mode)
-    bridge.dispatch(args.event, args.payload, provider_override=args.provider)
+    bridge.dispatch(args.event, args.payload, provider_override=args.provider, stream=args.stream)

@@ -202,3 +202,60 @@ class TestRouterRun:
         )
         result = router.run("local_llamacpp", "What is the answer?")
         assert result["result"] == "42"
+
+
+class TestStreaming:
+    @responses.activate
+    def test_stream_openai_compat(self, router):
+        url = "http://localhost:8080/v1/chat/completions"
+        sse_lines = [
+            'data: {"choices": [{"delta": {"content": "Hel"}, "finish_reason": null}]}',
+            'data: {"choices": [{"delta": {"content": "lo"}, "finish_reason": null}]}',
+            'data: {"choices": [{"delta": {"content": " world"}, "finish_reason": null}]}',
+            "data: [DONE]",
+            "",
+        ]
+        responses.add(
+            responses.POST, url,
+            body="\n".join(sse_lines),
+            status=200
+        )
+        chunks = list(router._stream_openai_compat("http://localhost:8080", "llama3", "Say hello"))
+        assert chunks == ["Hel", "lo", " world"]
+
+    def test_stream_google_api_missing_key(self, router):
+        if "GEMINI_API_KEY" in os.environ:
+            del os.environ["GEMINI_API_KEY"]
+        chunks = list(router._stream_google_api("https://example.com", "test"))
+        assert len(chunks) == 1
+        assert "GEMINI_API_KEY" in chunks[0]
+
+    def test_stream_provider_not_found(self, router):
+        with pytest.raises(ValueError, match="non trovato"):
+            list(router.stream("nonexistent", "test"))
+
+    def test_stream_unsupported_provider_type(self, router):
+        router.providers["bad"] = {"type": "unknown_type", "endpoint": "http://x", "model": "x"}
+        with pytest.raises(NotImplementedError, match="non supportato"):
+            list(router.stream("bad", "test"))
+
+    @responses.activate
+    def test_stream_google_api_chunks(self, router):
+        stream_url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:streamGenerateContent?key=test-key"
+        sse_data = [
+            '{"candidates": [{"content": {"parts": [{"text": "First "}]}}]}',
+            '{"candidates": [{"content": {"parts": [{"text": "chunk"}]}}]}',
+        ]
+        responses.add(
+            responses.POST, stream_url,
+            body="\n".join(sse_data),
+            status=200
+        )
+        os.environ["GEMINI_API_KEY"] = "test-key"
+        chunks = list(router._stream_google_api(
+            "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent",
+            "test"
+        ))
+        assert "First " in chunks
+        assert "chunk" in chunks
+        del os.environ["GEMINI_API_KEY"]
