@@ -121,27 +121,32 @@ Dalla review del codice sono stati corretti:
 
 ## Cosa funziona oggi
 
-- Bridge CLI con `--state`, `--workspace`, `--config`, `--event`, `--payload`, `--mode`, `--provider`, `--list-providers`, `--compact`
+- Bridge CLI con `--state`, `--workspace`, `--config`, `--event`, `--payload`, `--mode`, `--provider`, `--list-providers`, `--compact`, `--stream`
 - 7 provider LLM (4 locali con openai_compat, 1 opencode_api, 1 openhands_api, 2 cloud)
+- Streaming: `--stream` flag per tokens in real-time (google_api + openai_compat SSE)
 - Caveman mode: risposte concise (~65% meno token output) + compressione contesto (~46% meno token input)
+- Per-event system prompts: 7 prompt JSON specializzati in `config/prompts/`
 - Routing eventi via `matrix.json` o override diretto `--provider`
 - Docker Compose profiles per avviare solo il LLM desiderato
-- Makefile con target frequenti
+- Makefile con 20+ target (inclusi `test`, `test-%`)
+- **71 test automatizzati** (pytest), tutti passanti
 - DocIngester: crawling documentazione con trafilatura, ricostruzione CONTEXT.md
 - Nanobot MCP server: tool git, filesystem, SQLite
-- NanoClaw Gateway: interazione mobile via Telegram
+- NanoClaw Gateway: interazione mobile via Telegram (refactored con GatewayRunner)
+- Gateway Matrix: backend aggiuntivo per chat multi-piattaforma (matrix-nio)
 - Config MCP condivisa (`mcp_servers.json`) + 82+ MCP server Printing Press
 - Trigger locali: script cron + servizio systemd
 - `.env.example` completo
+- Wiki popolata: 13+ pagine (decisioni, scoperte, provider)
 
 ## Cosa manca (da fare)
 
-Tutte le fasi del piano sono state implementate. Integrazioni esterne completate (Caveman, Printing Press). Possibili miglioramenti futuri:
-1. Test automatizzati (unit/integration)
-2. Signal oltre a Telegram per NanoClaw
-3. Wiki population con decisioni e scoperte
-4. Supporto per streaming nelle risposte LLM
-5. Installazione automatica MCP server Printing Press (richiede Go)
+Fase 6 completata (tests, gateway, streaming). Possibili miglioramenti futuri:
+1. Signal gateway oltre a Telegram/Matrix per NanoClaw
+2. Installazione automatica MCP server Printing Press (richiede Go)
+3. CI/CD per test automatizzati su push
+4. Supporto per streaming in opencode_api/openhands_api (dipende dalle API)
+5. Pi/ds4.c come provider locale (richiede Mac 128GB+ RAM)
 
 ## Differenze chiave tra provider API
 
@@ -161,6 +166,10 @@ Tutte le fasi del piano sono state implementate. Integrazioni esterne completate
 | `OPENCODE_SERVER_PASSWORD` | Provider opencode_api | No (opzionale) |
 | `OPENHANDS_API_KEY` | Provider openhands_api | No (opzionale) |
 | `TELEGRAM_TOKEN` | NanoClaw gateway | Sì, se usi Telegram |
+| `MATRIX_HOMESERVER` | Matrix gateway (default: matrix.org) | No |
+| `MATRIX_USER` | Matrix gateway | Sì, se usi Matrix |
+| `MATRIX_PASSWORD` | Matrix gateway | Sì, se usi Matrix |
+| `MATRIX_ROOM_ID` | Matrix gateway | No |
 | `CAVEMAN_MODE` | Bridge: risposte concise (~65% meno token) | No (imposta a `1` per attivare) |
 | `LINEAR_API_KEY` | Linear MCP server (Printing Press) | No |
 | `SLACK_BOT_TOKEN` | Slack MCP server (Printing Press) | No |

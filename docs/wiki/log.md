@@ -55,3 +55,28 @@ grep "^## \[" log.md | tail -10
 - Il bridge carica automaticamente il prompt specifico per l'evento
 - CAVEMAN_MODE si compone con i prompt evento (aggiunge direttiva caveman)
 - Fallback al prompt generico se nessun file prompt esiste per l'evento
+
+## [2026-05-16] ingest | Fase 6 — Tests, Gateway Matrix, Streaming
+
+- **6A — Automated Tests:** 71 test totali, tutti passanti
+  - `test_bridge.py`: 22 test (resolve_event, load_event_prompt, build_system_prompt, _compress_context)
+  - `test_inference.py`: 21 test (google_api, openai_compat, opencode_api, openhands_api, streaming)
+  - `test_nanobot_mcp.py`: 14 test (git, fs, db tools)
+  - `test_doclingest.py`: 9 test (config, context, crawl)
+  - `test_nanoclaw_gateway.py`: 5 test (handle_message, TelegramBackend)
+  - `conftest.py`: fixtures condivise (temp dirs, mock providers, bridge, router)
+- **6B — Multi-platform Gateway:**
+  - `gateway_base.py`: `MessagingBackend` ABC + `GatewayRunner` (loop polling/dispatch)
+  - `gateway_matrix.py`: `MatrixBackend` con matrix-nio (login, sync, send)
+  - `nanoclaw_gateway.py`: refactored a `TelegramBackend` che usa `GatewayRunner`
+  - Architettura estensibile: aggiungere nuovi backend è implementare 3 metodi
+- **6C — Streaming:**
+  - `inference.py`: `stream()` method + `_stream_google_api()` + `_stream_openai_compat()`
+  - `bridge.py`: flag `--stream`, stampa tokens in real-time
+  - Google: streamGenerateContent endpoint, SSE chunk parsing
+  - OpenAI compat: stream=True payload, data: SSE line parsing
+  - Opencode/OpenHands: wrapper generator (yield full result)
+- **Piano aggiornato:** `docs/plan/README.md`, `resume.md`, `phase-6-automation.md`, `pi-integration-note.md`
+- **Wiki:** index.md aggiornato con nuove pagine decision/discovery/provider
+- **requirements.txt:** pytest, pytest-mock, responses, matrix-nio
+- **Makefile:** target `test` e `test-%`
