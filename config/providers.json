@@ -29,6 +29,11 @@
       "type": "opencode_api",
       "endpoint": "http://localhost:4096",
       "model": ""
+    },
+    "local_openhands": {
+      "type": "openhands_api",
+      "endpoint": "http://localhost:8000",
+      "model": "openhands-default"
     }
   }
 }

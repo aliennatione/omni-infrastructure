@@ -54,3 +54,15 @@ services:
       --config /app/config
       --event ${EVENT_TYPE:-git_automation}
       --payload ${TASK_PAYLOAD:-"Routine check and code refactor"}
+
+  nanobot:
+    build:
+      context: .
+      dockerfile: Dockerfile.nanobot
+    profiles: ["nanobot"]
+    ports:
+      - "4097:4097"
+    volumes:
+      - ../agent-state:/state:ro
+      - ../project-source:/workspace:rw
+    restart: unless-stopped

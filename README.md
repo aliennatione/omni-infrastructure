@@ -1,7 +1,7 @@
 # Omni-Agent Infrastructure
 
 Orchestratore GitOps multi-agent asincrono con inferenza distribuita.
-Supporta Google Gemini, LLM locali (llama.cpp, Ollama, LocalAI) e OpenCode.
+Supporta Google Gemini, LLM locali (llama.cpp, Ollama, LocalAI), OpenCode e OpenHands.
 
 ## Quick Start
 
@@ -51,7 +51,12 @@ Vedi [docs/setup.md](docs/setup.md) per token, secrets e deploy CI/CD.
 | [docs/local-mode.md](docs/local-mode.md) | Esecuzione locale con Docker Compose e LLM locali |
 | [docs/hybrid-mode.md](docs/hybrid-mode.md) | Bridge su GitHub Actions + LLM locale via tunnel |
 | [docs/providers.md](docs/providers.md) | Provider LLM supportati e configurazione |
+| [docs/mcp.md](docs/mcp.md) | Configurazione MCP server condivisa |
 | [docs/ingestion.md](docs/ingestion.md) | Crawling documentazione → knowledge base agent |
+| [docs/mcp.md](docs/mcp.md) | Configurazione MCP server condivisa |
+| [docs/nanobot.md](docs/nanobot.md) | Nanobot MCP server — tool git/fs/db |
+| [docs/mobile.md](docs/mobile.md) | NanoClaw gateway — interazione Telegram |
+| [docs/printing-press.md](docs/printing-press.md) | Printing Press — 82+ MCP server pre-built |
 | [docs/wiki/index.md](docs/wiki/index.md) | Wiki di conoscenza — decisioni, scoperte, provider |
 | [docs/plan/README.md](docs/plan/README.md) | Piano di lavoro — fasi di sviluppo |
 | [AGENTS.md](AGENTS.md) | Linee guida per AI agent che operano sul codice |

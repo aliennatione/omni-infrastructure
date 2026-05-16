@@ -17,6 +17,14 @@
     },
     "doc_ingestion": {
       "provider": "doclingest"
+    },
+    "local_cron": {
+      "provider": "local_llamacpp",
+      "description": "Esecuzione automatica periodica su macchina locale"
+    },
+    "chat_message": {
+      "provider": "local_openhands",
+      "description": "Messaggio da chat mobile (Telegram/Signal)"
     }
   }
 }

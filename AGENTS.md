@@ -132,7 +132,7 @@ PYTHONPATH=./core python core/bridge.py \
 ### Config conventions
 - `providers.json` declares available LLM providers with `type`, `endpoint`, `model`
 - `matrix.json` maps event types → provider + mode
-- Provider types: `google_api`, `openai_compat`, `opencode_api`
+- Provider types: `google_api`, `openai_compat`, `opencode_api`, `openhands_api`
 - Environment variables override config at runtime (`LLM_PROVIDER`, `LLM_ENDPOINT_URL`)
 
 ### Environment variables
@@ -145,6 +145,11 @@ PYTHONPATH=./core python core/bridge.py \
 | `LLM_API_KEY` | `openai_compat` | Local LLM API key |
 | `OPENCODE_SERVER_PASSWORD` | `opencode_api` | Basic auth for opencode serve |
 | `OPENCODE_SERVER_USERNAME` | `opencode_api` | Basic auth user (default: opencode) |
+| `OPENHANDS_API_KEY` | `openhands_api` | OpenHands API key (optional) |
+| `TELEGRAM_TOKEN` | `nanoclaw_gateway.py` | Telegram bot token |
+| `NANOCLAW_PROVIDER` | `nanoclaw_gateway.py` | Default LLM provider for NanoClaw |
+| `NANOCLAW_MODE` | `nanoclaw_gateway.py` | Default mode for NanoClaw |
+| `CAVEMAN_MODE` | `bridge.py` | Enable concise mode (~65% fewer output tokens) |
 | `STATE_REPO_PAT` | GitHub Actions | Access agent-state repo |
 | `SOURCE_REPO_PAT` | GitHub Actions | Access project-source repo |
 

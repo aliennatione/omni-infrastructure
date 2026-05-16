@@ -142,3 +142,45 @@ Provider 'local_llamacpp': impossibile connettersi.
 
 **Errore: "No such file or directory"**
 Hai dimenticato `make setup`. Le directory `state/` e `workspace/` devono esistere.
+
+## Trigger Automatici
+
+Per eseguire il bridge periodicamente senza intervento manuale:
+
+### Cron
+
+```bash
+# Installa lo script
+make install-cron
+
+# Aggiungi a crontab (ogni 4 ore)
+crontab -e
+# Aggiungi: 0 */4 * * * /usr/local/bin/omni-agent-cron --event local_cron
+
+# Test manuale
+/usr/local/bin/omni-agent-cron --event local_cron --provider local_llamacpp
+```
+
+### Systemd
+
+```bash
+# Installa e avvia il servizio
+make install-service
+
+# Verifica stato
+sudo systemctl status omni-agent
+
+# Vedi log in tempo reale
+sudo journalctl -u omni-agent -f
+```
+
+### Configurazione
+
+Prima di usare i trigger automatici, assicurati che `.env` sia configurato:
+
+```bash
+cp .env.example .env
+# Modifica .env con i tuoi valori
+```
+
+Il servizio systemd carica automaticamente le variabili da `.env`.

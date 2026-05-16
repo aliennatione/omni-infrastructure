@@ -1,4 +1,4 @@
-.PHONY: up down ps logs pull-model shell setup run up-% run-%
+.PHONY: up down ps logs pull-model shell setup run up-% run-% list-providers install-cron install-service install-pp
 
 PROVIDER ?= llamacpp
 
@@ -77,3 +77,27 @@ list-providers:
 		--workspace ./workspace \
 		--config ./config \
 		--list-providers
+
+# Installa lo script cron in /usr/local/bin
+install-cron:
+	cp scripts/omni-agent-cron /usr/local/bin/
+	chmod +x /usr/local/bin/omni-agent-cron
+	@echo "[*] Script cron installato. Aggiungi a crontab: 0 */4 * * * /usr/local/bin/omni-agent-cron"
+
+# Installa il servizio systemd
+install-service:
+	sudo cp scripts/omni-agent.service /etc/systemd/system/
+	sudo systemctl daemon-reload
+	sudo systemctl enable omni-agent
+	sudo systemctl start omni-agent
+	@echo "[*] Servizio systemd installato e avviato."
+
+# Installa Printing Press binary + MCP server dalla library
+install-pp:
+	@echo "[*] Installazione Printing Press binary..."
+	go install github.com/mvanhorn/cli-printing-press/v4/cmd/printing-press@latest
+	@echo "[*] Installazione MCP server: linear, slack, stripe..."
+	go install github.com/mvanhorn/printing-press-library/library/project-management/linear/cmd/linear-pp-mcp@latest
+	go install github.com/mvanhorn/printing-press-library/library/productivity/slack/cmd/slack-pp-mcp@latest
+	go install github.com/mvanhorn/printing-press-library/library/payments/stripe/cmd/stripe-pp-mcp@latest
+	@echo "[+] Printing Press installato. Vedi docs/printing-press.md per configurazione."

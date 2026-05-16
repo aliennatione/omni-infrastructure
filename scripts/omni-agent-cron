@@ -1,0 +1,40 @@
+#!/bin/sh
+# omni-agent-cron — Script per esecuzione periodica del bridge via crontab
+#
+# Installazione:
+#   1. Copia in /usr/local/bin/: cp scripts/omni-agent-cron /usr/local/bin/
+#   2. Rendi eseguibile: chmod +x /usr/local/bin/omni-agent-cron
+#   3. Aggiungi a crontab: crontab -e
+#      0 */4 * * * /usr/local/bin/omni-agent-cron --event local_cron
+#
+# Uso:
+#   omni-agent-cron [--event <type>] [--provider <name>] [--payload <text>]
+
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+EVENT="${1:-local_cron}"
+PROVIDER=""
+PAYLOAD="Scheduled local run"
+
+shift || true
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --event)   EVENT="$2"; shift 2 ;;
+        --provider) PROVIDER="--provider $2"; shift 2 ;;
+        --payload) PAYLOAD="$2"; shift 2 ;;
+        *) shift ;;
+    esac
+done
+
+cd "$SCRIPT_DIR"
+
+echo "[*] Running Omni-Agent Bridge (event=$EVENT)..."
+PYTHONPATH=./core python core/bridge.py \
+  --state ../agent-state \
+  --workspace ../project-source \
+  --config ./config \
+  --event "$EVENT" \
+  --payload "$PAYLOAD" \
+  --mode local \
+  $PROVIDER

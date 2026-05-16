@@ -34,6 +34,14 @@ API nativa del server `opencode serve`.
 - Flusso: crea sessione → invia messaggio → recupera risposta → cancella sessione
 - Endpoint: `{base_url}/session`
 
+### `openhands_api`
+API nativa di OpenHands Software Agent SDK (`agent_server`).
+- Autenticazione: `OPENHANDS_API_KEY` (env var, opzionale)
+- Flusso: crea sessione → invia messaggio → recupera risposta → cancella sessione
+- Endpoint: `{base_url}/api/sessions`
+- Porta predefinita: `http://localhost:8000`
+- Supporta MCP nativamente come client
+
 ## Provider Predefiniti
 
 | Provider | Tipo | Endpoint | Modello |
@@ -44,6 +52,7 @@ API nativa del server `opencode serve`.
 | `local_ollama` | `openai_compat` | `http://localhost:11434` | `llama3.2` |
 | `local_localai` | `openai_compat` | `http://localhost:8081` | `gpt-4` |
 | `local_opencode` | `opencode_api` | `http://localhost:4096` | — |
+| `local_openhands` | `openhands_api` | `http://localhost:8000` | — |
 
 ## Routing
 
@@ -109,3 +118,16 @@ In modalità `--mode local`, puoi forzare provider ed endpoint:
 2. Scegli il `type` appropriato (`google_api`, `openai_compat`, `opencode_api`)
 3. Opzionale: aggiungi una routing rule in `matrix.json`
 4. Opzionale: se il tipo non esiste, implementa un nuovo metodo in `inference.py`
+
+Tipi disponibili: `google_api`, `openai_compat`, `opencode_api`, `openhands_api`.
+
+## MCP Server
+
+I server MCP sono configurati centralmente in `config/mcp_servers.json`.
+Vedi [docs/mcp.md](mcp.md) per formato, utilizzo e procedura di aggiunta.
+
+### Printing Press Library
+
+82+ MCP server pre-built per API reali (Stripe, Linear, Slack, Notion, Jira, ecc.)
+sono disponibili nella [Printing Press Library](https://github.com/mvanhorn/printing-press-library).
+Vedi [docs/printing-press.md](printing-press.md) per installazione e integrazione.

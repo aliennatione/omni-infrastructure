@@ -1,0 +1,61 @@
+{
+  "mcp_servers": [
+    {
+      "name": "filesystem",
+      "transport": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/workspace"],
+      "env": {}
+    },
+    {
+      "name": "github",
+      "transport": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_TOKEN": "${GITHUB_TOKEN}"
+      }
+    },
+    {
+      "name": "nanobot",
+      "transport": "tcp",
+      "endpoint": "http://localhost:4097"
+    },
+    {
+      "name": "linear",
+      "transport": "stdio",
+      "command": "linear-pp-mcp",
+      "args": [],
+      "env": {
+        "LINEAR_API_KEY": "${LINEAR_API_KEY}"
+      },
+      "note": "Printing Press generated. Install: go install github.com/mvanhorn/printing-press-library/library/project-management/linear/cmd/linear-pp-mcp@latest"
+    },
+    {
+      "name": "slack",
+      "transport": "stdio",
+      "command": "slack-pp-mcp",
+      "args": [],
+      "env": {
+        "SLACK_BOT_TOKEN": "${SLACK_BOT_TOKEN}"
+      },
+      "note": "Printing Press generated. Install: go install github.com/mvanhorn/printing-press-library/library/productivity/slack/cmd/slack-pp-mcp@latest"
+    },
+    {
+      "name": "stripe",
+      "transport": "stdio",
+      "command": "stripe-pp-mcp",
+      "args": [],
+      "env": {
+        "STRIPE_SECRET_KEY": "${STRIPE_SECRET_KEY}"
+      },
+      "note": "Printing Press generated. Install: go install github.com/mvanhorn/printing-press-library/library/payments/stripe/cmd/stripe-pp-mcp@latest"
+    }
+  ],
+  "printing_press": {
+    "description": "Printing Press Library: 82+ pre-built MCP servers. Generate new ones with: printing-press <api-name>",
+    "catalog_url": "https://github.com/mvanhorn/printing-press-library",
+    "install_binary": "go install github.com/mvanhorn/cli-printing-press/v4/cmd/printing-press@latest",
+    "generate_new": "printing-press <api-name-or-url>"
+  }
+}

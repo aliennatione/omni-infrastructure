@@ -8,6 +8,7 @@ PROVIDER_HINTS = {
     "local_localai": "make up-localai",
     "local_ollama": "make up-ollama",
     "local_opencode": "opencode serve",
+    "local_openhands": "openhands start",
 }
 
 
@@ -30,6 +31,8 @@ class InferenceRouter:
             return self.openai_compat(endpoint, model, prompt)
         elif ptype == "opencode_api":
             return self.opencode_api(endpoint, prompt)
+        elif ptype == "openhands_api":
+            return self.openhands_api(endpoint, prompt)
         else:
             raise NotImplementedError(f"Tipo provider {ptype} non supportato.")
 
@@ -117,3 +120,41 @@ class InferenceRouter:
             return result
         except Exception as e:
             return self._hint("local_opencode", e)
+
+    def openhands_api(self, base_url, prompt):
+        api_key = os.environ.get("OPENHANDS_API_KEY", "")
+        base_url = base_url.rstrip("/")
+        headers = {"Content-Type": "application/json"}
+        if api_key:
+            headers["Authorization"] = f"Bearer {api_key}"
+        try:
+            sess_resp = requests.post(
+                f"{base_url}/api/sessions",
+                json={"name": "omni-agent-session"},
+                headers=headers,
+                timeout=30
+            )
+            sess_resp.raise_for_status()
+            session_id = sess_resp.json()["session_id"]
+            payload = {"message": prompt, "reset": True}
+            msg_resp = requests.post(
+                f"{base_url}/api/sessions/{session_id}/messages",
+                json=payload,
+                headers=headers,
+                timeout=self.timeout
+            )
+            msg_resp.raise_for_status()
+            data = msg_resp.json()
+            ai_text = data.get("content", "")
+            if isinstance(ai_text, list):
+                ai_text = " ".join(
+                    part.get("text", "") for part in ai_text if isinstance(part, dict) and part.get("text")
+                )
+            result = {"result": ai_text.strip(), "session_id": session_id}
+            try:
+                requests.delete(f"{base_url}/api/sessions/{session_id}", headers=headers, timeout=10)
+            except Exception:
+                pass
+            return result
+        except Exception as e:
+            return self._hint("local_openhands", e)
